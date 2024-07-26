@@ -11,12 +11,4 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Include=".idea\.idea.AIGame_backend\.idea\.gitignore" />
-      <Content Include=".idea\.idea.AIGame_backend\.idea\encodings.xml" />
-      <Content Include=".idea\.idea.AIGame_backend\.idea\indexLayout.xml" />
-      <Content Include=".idea\.idea.AIGame_backend\.idea\projectSettingsUpdater.xml" />
-      <Content Include=".idea\.idea.AIGame_backend\.idea\workspace.xml" />
-    </ItemGroup>
-
 </Project>
