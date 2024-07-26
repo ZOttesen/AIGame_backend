@@ -1,0 +1,6 @@
+@AIGame_backend_HostAddress = http://localhost:5137
+
+GET {{AIGame_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
