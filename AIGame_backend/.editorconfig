@@ -3,7 +3,17 @@ root = true
 
 # Global settings
 [*.cs]
-# Remove the need for a copyright header
+
+# C# 9.0
+dotnet_diagnostic.CS8618.severity = none # Non-nullable field is uninitialized. Consider declaring as nullable.
+
+
+#StyleCop settings
+dotnet_diagnostic.SA1101.severity = none # Prefix local calls with this
+dotnet_diagnostic.SA1135.severity = none # Using directive for namespace should be qualified
+
+dotnet_diagnostic.SA1309.severity = none # Field names should not begin with an underscore
+
 dotnet_diagnostic.SA1600.severity = none # Elements should be documented
 dotnet_diagnostic.SA1601.severity = none # Partial elements should be documented
 dotnet_diagnostic.SA1602.severity = none # Enumeration items should be documented

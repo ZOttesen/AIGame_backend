@@ -8,11 +8,11 @@ public partial class User
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("id")]
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     [Required]
     [Column("user_guid")]
-    public Guid UserGuid { get; set; }
+    public Guid UserGuid { get; init; } = Guid.NewGuid();
 
     [Required]
     [MaxLength(255)]
@@ -36,11 +36,5 @@ public partial class User
 
     [Required]
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-
-    public User()
-    {
-        UserGuid = Guid.NewGuid();
-        CreatedAt = DateTime.UtcNow;
-    }
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 }
