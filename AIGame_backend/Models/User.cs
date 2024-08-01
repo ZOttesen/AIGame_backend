@@ -1,40 +1,46 @@
+namespace AIGame_backend.Models;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
-namespace AIGame_backend.Models;
 
 public partial class User
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int id { get; set; }
-    
+    [Column("id")]
+    public int Id { get; set; }
+
     [Required]
-    public Guid user_guid { get; set; }
-        
-    [Required]
-    [MaxLength(255)]
-    public string first_name { get; set; }
-        
+    [Column("user_guid")]
+    public Guid UserGuid { get; set; }
+
     [Required]
     [MaxLength(255)]
-    public string last_name { get; set; }
-        
+    [Column("first_name")]
+    public string FirstName { get; set; }
+
     [Required]
     [MaxLength(255)]
-    public string email { get; set; }
-        
+    [Column("last_name")]
+    public string LastName { get; set; }
+
     [Required]
     [MaxLength(255)]
-    public string password { get; set; }
-        
+    [Column("email")]
+    public string Email { get; set; }
+
     [Required]
-    public DateTime created_at { get; set; }
-    
+    [MaxLength(255)]
+    [Column("password")]
+    public string Password { get; set; }
+
+    [Required]
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; }
+
     public User()
     {
-        user_guid = Guid.NewGuid();
-        created_at = DateTime.UtcNow;
+        UserGuid = Guid.NewGuid();
+        CreatedAt = DateTime.UtcNow;
     }
-        
 }

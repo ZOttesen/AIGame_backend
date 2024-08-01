@@ -1,31 +1,44 @@
-using AIGame_backend.Models;
-using Microsoft.EntityFrameworkCore;
-
 namespace AIGame_backend.Controllers
 {
-    public class UserDbContext : DbContext
+    using AIGame_backend.Models;
+    using Microsoft.EntityFrameworkCore;
+
+    /// <summary>
+    /// User context.
+    /// </summary>
+    public class UserContext : DbContext
     {
-        public UserDbContext(DbContextOptions<UserDbContext> options)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UserContext"/> class.
+        /// </summary>
+        /// <param name="options">options.</param>
+        public UserContext(DbContextOptions<UserContext> options)
             : base(options)
         {
         }
-        
 
+        /// <summary>
+        /// Gets or sets users.
+        /// </summary>
         public DbSet<User> Users { get; set; }
 
+        /// <summary>
+        /// On model creating.
+        /// </summary>
+        /// <param name="modelBuilder">modelBuilder.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
             {
                 entity.ToTable("users");
 
-                entity.Property(e => e.id).HasColumnName("id");
-                entity.Property(e => e.user_guid).HasColumnName("user_guid");
-                entity.Property(e => e.first_name).HasColumnName("first_name");
-                entity.Property(e => e.last_name).HasColumnName("last_name");
-                entity.Property(e => e.email).HasColumnName("email");
-                entity.Property(e => e.password).HasColumnName("password");
-                entity.Property(e => e.created_at).HasColumnName("created_at");
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.UserGuid).HasColumnName("user_guid");
+                entity.Property(e => e.FirstName).HasColumnName("first_name");
+                entity.Property(e => e.LastName).HasColumnName("last_name");
+                entity.Property(e => e.Email).HasColumnName("email");
+                entity.Property(e => e.Password).HasColumnName("password");
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
             });
         }
     }

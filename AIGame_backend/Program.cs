@@ -1,8 +1,6 @@
+using AIGame_backend.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using AIGame_backend.Controllers;
-using AIGame_backend.Models;
-
 
 var builder = WebApplication.CreateBuilder(args);
 DotNetEnv.Env.Load();
@@ -16,15 +14,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddDbContext<UserDbContext>(options =>
+builder.Services.AddDbContext<UserContext>(options =>
     options.UseSqlServer(
         $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};" +
         $"Database={Environment.GetEnvironmentVariable("DB_BACKEND")};" +
         $"User Id={Environment.GetEnvironmentVariable("DB_USER")};" +
         $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-        "TrustServerCertificate=True;"
-    )
-);
+        "TrustServerCertificate=True;"));
 
 var app = builder.Build();
 

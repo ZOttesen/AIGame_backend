@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AIGame_backend.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(UserContext))]
     [Migration("20240801093709_InitialDatabase")]
     partial class InitialDatabase
     {
