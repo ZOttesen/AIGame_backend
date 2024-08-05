@@ -65,4 +65,28 @@ public class AuthApiController(UserContext context) : ControllerBase
 
         return Ok(new { token });
     }
+
+    [HttpPost("edit-user")]
+    public async Task<IActionResult> EditUser([FromBody] EditUserRequest request)
+    {
+        if (!_jwtService.ValidateToken(request.Token))
+        {
+            return Unauthorized();
+        }
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.UserGuid == request.UserGuid);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        user.Email = request.Email ?? user.Email;
+        user.FirstName = request.FirstName ?? user.FirstName;
+        user.LastName = request.LastName ?? user.LastName;
+
+        await context.SaveChangesAsync();
+
+        return Ok("User updated successfully");
+    }
 }
