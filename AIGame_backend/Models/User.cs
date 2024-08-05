@@ -15,6 +15,10 @@ public partial class User
     public Guid UserGuid { get; init; } = Guid.NewGuid();
 
     [Required]
+    [Column("username")]
+    public string Username { get; set; }
+
+    [Required]
     [MaxLength(255)]
     [Column("first_name")]
     public string FirstName { get; set; }

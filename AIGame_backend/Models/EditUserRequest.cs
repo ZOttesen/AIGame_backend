@@ -6,6 +6,8 @@ public partial class EditUserRequest
 
     public Guid UserGuid { get; set; }
 
+    public string? Username { get; set; }
+
     public string? Email { get; set; }
 
     public string? FirstName { get; set; }
