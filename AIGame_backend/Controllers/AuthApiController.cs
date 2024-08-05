@@ -33,6 +33,7 @@ public class AuthApiController(UserContext context) : ControllerBase
 
         var user = new User
         {
+            Username = request.Username,
             Email = request.Email,
             Password = hashedPassword,
             FirstName = request.FirstName,
@@ -42,7 +43,7 @@ public class AuthApiController(UserContext context) : ControllerBase
         context.Users.Add(user);
         await context.SaveChangesAsync(); // Save changes in the DB context to generate the id for the user
 
-        return Ok(user);
+        return Ok("User created successfully");
     }
 
     [HttpPost("login")]
@@ -81,6 +82,7 @@ public class AuthApiController(UserContext context) : ControllerBase
             return NotFound();
         }
 
+        user.Username = request.Username ?? user.Username;
         user.Email = request.Email ?? user.Email;
         user.FirstName = request.FirstName ?? user.FirstName;
         user.LastName = request.LastName ?? user.LastName;
