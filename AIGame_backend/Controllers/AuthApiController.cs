@@ -24,7 +24,7 @@ public class AuthApiController(UserContext context) : ControllerBase
         var hashedPassword = _hashing.Hash(request.Password); // Hash the password before storing
 
         var latestUser = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.CurrentCultureIgnoreCase));
 
         if (latestUser != null)
         {
@@ -34,7 +34,7 @@ public class AuthApiController(UserContext context) : ControllerBase
         var user = new User
         {
             Username = request.Username,
-            Email = request.Email,
+            Email = request.Email.ToLower(),
             Password = hashedPassword,
             FirstName = request.FirstName,
             LastName = request.LastName,
@@ -50,7 +50,7 @@ public class AuthApiController(UserContext context) : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginUser request)
     {
         var user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
+            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.CurrentCultureIgnoreCase));
 
         if (user == null)
         {
