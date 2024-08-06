@@ -1,4 +1,5 @@
 using AIGame_backend.Controllers;
+using AIGame_backend.Services;
 using AIGame_backend.Utility;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
@@ -21,9 +22,10 @@ builder.Services.AddDbContext<UserContext>(options =>
         $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
         "TrustServerCertificate=True;"));
 
-builder.Services.AddSingleton<JwtService>();
-builder.Services.AddSingleton<Hashing>();
-builder.Services.AddSingleton<PasswordValidator>();
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<Hashing>();
+builder.Services.AddScoped<PasswordValidator>();
+builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-﻿namespace AIGame_backend.Utility;
+﻿namespace AIGame_backend.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -21,24 +21,32 @@ public class JwtService
     /// Generates a JWT token for the user with the given id
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="username"></param>
     /// <returns></returns>
-    public string GenerateToken(Guid id)
+    public string GenerateToken(Guid id, string username)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
-        var tokenDescriptor = new SecurityTokenDescriptor()
+        var claims = new[]
         {
-            Subject = new ClaimsIdentity(new[] { new Claim("id", id.ToString()) }),
+            new Claim("id", id.ToString()),
+            new Claim("username", username),
+        };
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddMinutes(3),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(Convert.FromBase64String(_jwtSecret)),
                 SecurityAlgorithms.HmacSha256Signature),
         };
+
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
 
-    public bool ValidateToken(string token)
+    public ClaimsPrincipal ValidateToken(string token)
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
@@ -52,13 +60,23 @@ public class JwtService
 
         try
         {
-            tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out _);
+            return principal;
         }
-        catch (SecurityTokenException)
+        catch (SecurityTokenException ex)
         {
-            return false;
+            throw new UnauthorizedAccessException("Invalid token", ex);
+        }
+    }
+
+    public Guid ExtractGuid(ClaimsPrincipal principal)
+    {
+        var userIdClaim = principal.FindFirst("id");
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userGuid))
+        {
+            throw new UnauthorizedAccessException("Invalid token or no user ID found");
         }
 
-        return true;
+        return userGuid;
     }
 }
