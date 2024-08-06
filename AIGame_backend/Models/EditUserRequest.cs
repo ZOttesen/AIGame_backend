@@ -4,8 +4,6 @@ public partial class EditUserRequest
 {
     public string Token { get; set; }
 
-    public Guid UserGuid { get; set; }
-
     public string? Username { get; set; }
 
     public string? Email { get; set; }

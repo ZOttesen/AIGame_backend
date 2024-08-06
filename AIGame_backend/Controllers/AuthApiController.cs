@@ -1,35 +1,37 @@
 namespace AIGame_backend.Controllers;
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Models;
+using Services;
 using Utility;
 
 [ApiController]
 [Route("v1")]
-public class AuthApiController(UserContext context) : ControllerBase
+public class AuthApiController : ControllerBase
 {
-    private readonly Hashing _hashing = new();
-    private readonly PasswordValidator _passwordValidator = new();
-    private readonly JwtService _jwtService = new();
+    private readonly Hashing _hashing;
+    private readonly PasswordValidator _passwordValidator;
+    private readonly JwtService _jwtService;
+    private readonly UserService _userService;
+
+    public AuthApiController(Hashing hashing, PasswordValidator passwordValidator, JwtService jwtService, UserService userService)
+    {
+        _hashing = hashing;
+        _passwordValidator = passwordValidator;
+        _jwtService = jwtService;
+        _userService = userService;
+    }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUser request)
     {
-        if (!_passwordValidator.Validate(request.Password))
-        {
-            return BadRequest("Password does not meet the requirements");
-        }
+        _passwordValidator.Validate(request.Password);
 
         var hashedPassword = _hashing.Hash(request.Password); // Hash the password before storing
 
-        var latestUser = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.CurrentCultureIgnoreCase));
-
-        if (latestUser != null)
-        {
-            return BadRequest("User already exists");
-        }
+        await _userService.EmailExists(request.Email);
+        await _userService.UserExists(request.Username);
 
         var user = new User
         {
@@ -40,8 +42,7 @@ public class AuthApiController(UserContext context) : ControllerBase
             LastName = request.LastName,
         };
 
-        context.Users.Add(user);
-        await context.SaveChangesAsync(); // Save changes in the DB context to generate the id for the user
+        await _userService.Add(user);
 
         return Ok("User created successfully");
     }
@@ -49,20 +50,11 @@ public class AuthApiController(UserContext context) : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUser request)
     {
-        var user = await context.Users
-            .FirstOrDefaultAsync(u => u.Email.Equals(request.Email, StringComparison.CurrentCultureIgnoreCase));
+        var user = await _userService.FirstOrDefaultAsync(request.Email);
 
-        if (user == null)
-        {
-            return NotFound();
-        }
+        _hashing.Verify(request.Password, user.Password);
 
-        if (!_hashing.Verify(request.Password, user.Password))
-        {
-            return Unauthorized();
-        }
-
-        var token = _jwtService.GenerateToken(user.UserGuid);
+        var token = _jwtService.GenerateToken(user.UserGuid, user.Username);
 
         return Ok(new { token });
     }
@@ -70,25 +62,24 @@ public class AuthApiController(UserContext context) : ControllerBase
     [HttpPost("edit-user")]
     public async Task<IActionResult> EditUser([FromBody] EditUserRequest request)
     {
-        if (!_jwtService.ValidateToken(request.Token))
-        {
-            return Unauthorized();
-        }
+        ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
+        Guid userGuid = _jwtService.ExtractGuid(token);
+        User user = await _userService.FirstOrDefaultAsync(userGuid);
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.UserGuid == request.UserGuid);
-
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        user.Username = request.Username ?? user.Username;
-        user.Email = request.Email ?? user.Email;
-        user.FirstName = request.FirstName ?? user.FirstName;
-        user.LastName = request.LastName ?? user.LastName;
-
-        await context.SaveChangesAsync();
-
+        await _userService.UpdateUser(user, request);
         return Ok("User updated successfully");
+    }
+
+    [HttpPost("delete-user")]
+    public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)
+    {
+        ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
+        Guid userGuid = _jwtService.ExtractGuid(token);
+        User user = await _userService.FindUserByGuidAsync(userGuid);
+
+        _hashing.Verify(request.Password, user.Password);
+        await _userService.Remove(user);
+
+        return Ok("User deleted successfully");
     }
 }
