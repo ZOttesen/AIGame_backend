@@ -28,7 +28,7 @@ public class AuthApiController : ControllerBase
     {
         _passwordValidator.Validate(request.Password);
 
-        var hashedPassword = _hashing.Hash(request.Password); // Hash the password before storing
+        var hashedPassword = _hashing.Hash(request.Password);
 
         await _userService.EmailExists(request.Email);
         await _userService.UserExists(request.Username);
@@ -51,9 +51,7 @@ public class AuthApiController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginUser request)
     {
         var user = await _userService.FirstOrDefaultAsync(request.Email);
-
         _hashing.Verify(request.Password, user.Password);
-
         var token = _jwtService.GenerateToken(user.UserGuid, user.Username);
 
         return Ok(new { token });
@@ -81,5 +79,21 @@ public class AuthApiController : ControllerBase
         await _userService.Remove(user);
 
         return Ok("User deleted successfully");
+    }
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
+        Guid userGuid = _jwtService.ExtractGuid(token);
+        User user = await _userService.FirstOrDefaultAsync(userGuid);
+
+        _hashing.Verify(request.OldPassword, user.Password);
+        _passwordValidator.Validate(request.NewPassword);
+
+        user.Password = _hashing.Hash(request.NewPassword);
+        await _userService.SaveChangesAsync();
+
+        return Ok("Password changed successfully");
     }
 }

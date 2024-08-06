@@ -90,7 +90,7 @@ public class UserService(UserContext context)
         await SaveChangesAsync();
     }
 
-    private async Task SaveChangesAsync()
+    public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();
     }
