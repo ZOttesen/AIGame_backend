@@ -22,8 +22,11 @@ public class JwtService
     /// </summary>
     /// <param name="id"></param>
     /// <param name="username"></param>
+    /// <param name="email"></param>
+    /// <param name="firstName"></param>
+    /// <param name="lastName"></param>
     /// <returns></returns>
-    public string GenerateToken(Guid id, string username)
+    public string GenerateToken(Guid id, string username, string email, string firstName, string lastName)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -31,6 +34,9 @@ public class JwtService
         {
             new Claim("id", id.ToString()),
             new Claim("username", username),
+            new Claim("email", email),
+            new Claim("firstName", firstName),
+            new Claim("lastName", lastName),
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor

@@ -26,25 +26,40 @@ public class AuthApiController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUser request)
     {
-        _passwordValidator.Validate(request.Password);
-
-        var hashedPassword = _hashing.Hash(request.Password);
-
-        await _userService.EmailExists(request.Email);
-        await _userService.UserExists(request.Username);
-
-        var user = new User
+        try
         {
-            Username = request.Username,
-            Email = request.Email.ToLower(),
-            Password = hashedPassword,
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-        };
+            _passwordValidator.Validate(request.Password);
 
-        await _userService.Add(user);
+            var hashedPassword = _hashing.Hash(request.Password);
 
-        return Ok("User created successfully");
+            await _userService.EmailExists(request.Email);
+            await _userService.UserExists(request.Username);
+
+            var user = new User
+            {
+                Username = request.Username,
+                Email = request.Email.ToLower(),
+                Password = hashedPassword,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+            };
+
+            await _userService.Add(user);
+
+            return Ok(new { message = "User created successfully" });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An unexpected error occurred", details = ex.Message });
+        }
     }
 
     [HttpPost("login")]
@@ -52,12 +67,12 @@ public class AuthApiController : ControllerBase
     {
         var user = await _userService.FirstOrDefaultAsync(request.Email);
         _hashing.Verify(request.Password, user.Password);
-        var token = _jwtService.GenerateToken(user.UserGuid, user.Username);
+        var token = _jwtService.GenerateToken(user.UserGuid, user.Username, user.Email, user.FirstName, user.LastName);
 
         return Ok(new { token });
     }
 
-    [HttpPost("edit-user")]
+    [HttpPatch("user")]
     public async Task<IActionResult> EditUser([FromBody] EditUserRequest request)
     {
         ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
@@ -68,7 +83,7 @@ public class AuthApiController : ControllerBase
         return Ok("User updated successfully");
     }
 
-    [HttpPost("delete-user")]
+    [HttpDelete("user")]
     public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)
     {
         ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
@@ -81,7 +96,7 @@ public class AuthApiController : ControllerBase
         return Ok("User deleted successfully");
     }
 
-    [HttpPost("change-password")]
+    [HttpPatch("password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);

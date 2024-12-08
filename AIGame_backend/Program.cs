@@ -8,6 +8,27 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", builder =>
+    {
+        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+        Console.WriteLine($"Frontend URL: {frontendUrl}");
+        builder.WithOrigins(frontendUrl)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureHttpsDefaults(httpsOptions =>
+    {
+        httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -28,6 +49,14 @@ builder.Services.AddScoped<PasswordValidator>();
 builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<UserContext>();
+    dbContext.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
