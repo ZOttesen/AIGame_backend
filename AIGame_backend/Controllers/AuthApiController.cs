@@ -65,23 +65,95 @@ public class AuthApiController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUser request)
     {
-        var user = await _userService.FirstOrDefaultAsync(request.Email);
-        _hashing.Verify(request.Password, user.Password);
-        var token = _jwtService.GenerateToken(user.UserGuid, user.Username, user.Email, user.FirstName, user.LastName);
+        try
+        {
+            var user = await _userService.FirstOrDefaultAsync(request.Email);
 
-        return Ok(new { token });
+            _hashing.Verify(request.Password, user.Password);
+
+            var token = _jwtService.GenerateToken(user.UserGuid);
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddHours(1),
+            };
+            Response.Cookies.Append("authToken", token, cookieOptions);
+
+            Console.WriteLine($"Cookie options: {cookieOptions}");
+
+            return Ok(new { message = "Login successful" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during login: {ex.Message}");
+            return StatusCode(500, new { message = "An error occurred during login" });
+        }
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/",
+            Expires = DateTime.UtcNow.AddDays(-1),
+        };
+
+        Response.Cookies.Append("authToken", string.Empty, cookieOptions);
+
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+    [HttpGet("user")]
+    public async Task<IActionResult> GetUser()
+    {
+        var userClaims = HttpContext.Items["User"] as ClaimsPrincipal;
+
+        if (userClaims == null)
+        {
+            return Unauthorized(new { message = "Unauthorized" });
+        }
+
+        try
+        {
+            var userGuid = Guid.Parse(userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
+            var user = await _userService.FirstOrDefaultAsync(userGuid);
+
+            return Ok(new
+            {
+                userGuid = user.UserGuid,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                email = user.Email,
+                username = user.Username,
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving user: {ex.Message}");
+            return StatusCode(500, new { message = "An error occurred while retrieving user data" });
+        }
     }
 
     [HttpPatch("user")]
     public async Task<IActionResult> EditUser([FromBody] EditUserRequest request)
     {
-        ClaimsPrincipal token = _jwtService.ValidateToken(request.Token);
-        Guid userGuid = _jwtService.ExtractGuid(token);
-        User user = await _userService.FirstOrDefaultAsync(userGuid);
+        var user = HttpContext.Items["User"] as User;
+        if (user == null)
+        {
+            return Unauthorized(new { message = "Unauthorized" });
+        }
 
         await _userService.UpdateUser(user, request);
         return Ok("User updated successfully");
     }
+
 
     [HttpDelete("user")]
     public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)

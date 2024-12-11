@@ -10,11 +10,18 @@ Env.Load();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", builder =>
+    options.AddPolicy("AllowFrontend", policyBuilder =>
     {
-        var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
-        Console.WriteLine($"Frontend URL: {frontendUrl}");
-        builder.WithOrigins(frontendUrl)
+        var frontendUrls = Environment.GetEnvironmentVariable("FRONTEND_URL");
+
+        var allowedOrigins = frontendUrls.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var origin in allowedOrigins)
+        {
+            Console.WriteLine(origin);
+        }
+
+        policyBuilder.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -64,6 +71,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<JwtMiddleware>();
 app.UseHttpsRedirection();
+app.UseHsts();
 app.MapControllers();
 app.Run();

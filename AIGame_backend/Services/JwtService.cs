@@ -21,28 +21,20 @@ public class JwtService
     /// Generates a JWT token for the user with the given id
     /// </summary>
     /// <param name="id"></param>
-    /// <param name="username"></param>
-    /// <param name="email"></param>
-    /// <param name="firstName"></param>
-    /// <param name="lastName"></param>
     /// <returns></returns>
-    public string GenerateToken(Guid id, string username, string email, string firstName, string lastName)
+    public string GenerateToken(Guid id)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
 
         var claims = new[]
         {
-            new Claim("id", id.ToString()),
-            new Claim("username", username),
-            new Claim("email", email),
-            new Claim("firstName", firstName),
-            new Claim("lastName", lastName),
+            new Claim(ClaimTypes.NameIdentifier, id.ToString()),
         };
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(3),
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(Convert.FromBase64String(_jwtSecret)),
                 SecurityAlgorithms.HmacSha256Signature),
@@ -77,7 +69,7 @@ public class JwtService
 
     public Guid ExtractGuid(ClaimsPrincipal principal)
     {
-        var userIdClaim = principal.FindFirst("id");
+        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userGuid))
         {
             throw new UnauthorizedAccessException("Invalid token or no user ID found");
@@ -85,4 +77,5 @@ public class JwtService
 
         return userGuid;
     }
+
 }
