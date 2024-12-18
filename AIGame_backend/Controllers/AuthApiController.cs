@@ -78,7 +78,7 @@ public class AuthApiController : ControllerBase
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddMinutes(1),
             };
             Response.Cookies.Append("authToken", token, cookieOptions);
 
